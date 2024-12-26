@@ -1,0 +1,11 @@
+[Unit]
+Description=Zabbix monitoring for RuuviTags
+
+[Service]
+Type=simple
+User=zabbix
+WorkingDirectory=/opt/zabbix-ruuvitags
+ExecStart=/opt/zabbix-ruuvitags/venv/bin/python ruuvitags.py
+
+[Install]
+WantedBy=multi-user.target
