@@ -1,0 +1,220 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: 1324f4adb3de4204abd7930d1e664318
+      template: Template-App-RuuviTag
+      name: 'Template::App::RuuviTag'
+      description: |
+        Release notes:
+        
+        Version 2025-01-18.1:
+        - Changed RuuviTag discovery to use {$RUUVITAGS} macro and a script
+        - Changed reading of data values to /run/zabbix/ruuvitags.log
+        - Added triggers with context macros
+        
+        Version 2024-05-18.1:
+        - First version
+        
+        Macros:
+        RUUVITAGS = JSON dictionary of "mac address": "tag name" pairs for RuuviTags
+      groups:
+        - name: Templates
+      items:
+        - uuid: 81fad801d8564a9a9fa96af5baf3900f
+          name: 'RuuviTag data'
+          type: ZABBIX_ACTIVE
+          key: 'logrt["/run/zabbix/ruuvitags\.log"]'
+          delay: 1s
+          history: '0'
+          value_type: LOG
+          trends: '0'
+          tags:
+            - tag: component
+              value: sensor
+      discovery_rules:
+        - uuid: 5eaead86497b4b2b830dec27bc280768
+          name: 'RuuviTag discovery'
+          type: SCRIPT
+          key: ruuvitag.discovery
+          delay: 1h
+          params: |
+            const params = JSON.parse(value);
+            // params.ruuviTags has backslashes due to JSON string quoting, remove them
+            const ruuviTags = JSON.parse(params.ruuviTags.replace(/\\/g, ''));
+            var result = [];
+            for (var mac in ruuviTags) {
+                result.push({"{#MAC}": mac, "{#NAME}": ruuviTags[mac]});
+            }
+            return JSON.stringify(result);
+          lifetime: 30d
+          enabled_lifetime_type: DISABLE_NEVER
+          item_prototypes:
+            - uuid: e9ae53e8b3924d4799c926bbec767e7d
+              name: '{#NAME} RuuviTag humidity'
+              type: DEPENDENT
+              key: 'ruuvitag.humidity[{#MAC}]'
+              delay: '0'
+              history: 10d
+              value_type: FLOAT
+              units: '%'
+              preprocessing:
+                - type: MATCHES_REGEX
+                  parameters:
+                    - '^{#MAC}'
+                  error_handler: DISCARD_VALUE
+                - type: REGEX
+                  parameters:
+                    - '^[^ ]+ [0-9\.]+ ([0-9\.]+)'
+                    - \1
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return Math.round(value)'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 60s
+              master_item:
+                key: 'logrt["/run/zabbix/ruuvitags\.log"]'
+              tags:
+                - tag: component
+                  value: sensor
+            - uuid: 6691a9b62d704d2ca31eb3e1fc8d3627
+              name: '{#NAME} RuuviTag signal'
+              type: DEPENDENT
+              key: 'ruuvitag.rssi[{#MAC}]'
+              delay: '0'
+              history: 10d
+              value_type: FLOAT
+              units: dBm
+              preprocessing:
+                - type: MATCHES_REGEX
+                  parameters:
+                    - '^{#MAC}'
+                  error_handler: DISCARD_VALUE
+                - type: REGEX
+                  parameters:
+                    - '^[^ ]+ [0-9\.]+ [0-9\.]+ ([-0-9\.]+)'
+                    - \1
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 60s
+              master_item:
+                key: 'logrt["/run/zabbix/ruuvitags\.log"]'
+              tags:
+                - tag: component
+                  value: sensor
+              trigger_prototypes:
+                - uuid: 9b14e1598e4741bca07c60d9b24e636f
+                  expression: 'nodata(/Template-App-RuuviTag/ruuvitag.rssi[{#MAC}],{$T_RUUVITAG_NODATA_INTERVAL:"{#MAC}"}) = 1'
+                  name: 'No data for {#NAME} RuuviTag for {$T_RUUVITAG_NODATA_INTERVAL:"{#MAC}"}'
+                  priority: WARNING
+                  tags:
+                    - tag: scope
+                      value: availability
+                - uuid: a08c772277a743869d311746c35d8523
+                  expression: 'max(/Template-App-RuuviTag/ruuvitag.rssi[{#MAC}],5m) < {$T_RUUVITAG_SIGNAL_LOW_THRESH1:"{#MAC}"}'
+                  name: '{#NAME} RuuviTag signal is low (under {$T_RUUVITAG_SIGNAL_LOW_THRESH1:"{#MAC}"} dBm)'
+                  priority: WARNING
+                  tags:
+                    - tag: scope
+                      value: notice
+            - uuid: 78484960982043edb14879aa9afd0d81
+              name: '{#NAME} RuuviTag temperature'
+              type: DEPENDENT
+              key: 'ruuvitag.temperature[{#MAC}]'
+              delay: '0'
+              history: 10d
+              value_type: FLOAT
+              units: °C
+              preprocessing:
+                - type: MATCHES_REGEX
+                  parameters:
+                    - '^{#MAC}'
+                  error_handler: DISCARD_VALUE
+                - type: REGEX
+                  parameters:
+                    - '^[^ ]+ ([0-9\.]+)'
+                    - \1
+                - type: JAVASCRIPT
+                  parameters:
+                    - 'return Math.round(value*10)/10'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 60s
+              master_item:
+                key: 'logrt["/run/zabbix/ruuvitags\.log"]'
+              tags:
+                - tag: component
+                  value: sensor
+              trigger_prototypes:
+                - uuid: 67809dbadd0342b0b388e52774f34d1b
+                  expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) > {$T_RUUVITAG_TEMP_HIGH_THRESH1:"{#MAC}"}'
+                  name: '{#NAME} RuuviTag temperature is high (above {$T_RUUVITAG_TEMP_HIGH_THRESH1:"{#MAC}"})'
+                  priority: WARNING
+                  dependencies:
+                    - name: '{#NAME} RuuviTag temperature is very high (above {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"})'
+                      expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) > {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"}'
+                  tags:
+                    - tag: scope
+                      value: notice
+                - uuid: 5de0d2b80864497eb9bcb86b87289f68
+                  expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) < {$T_RUUVITAG_TEMP_LOW_THRESH1:"{#MAC}"}'
+                  name: '{#NAME} RuuviTag temperature is low (below {$T_RUUVITAG_TEMP_LOW_THRESH1:"{#MAC}"})'
+                  priority: WARNING
+                  dependencies:
+                    - name: '{#NAME} RuuviTag temperature is very low (below {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"})'
+                      expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) < {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"}'
+                  tags:
+                    - tag: scope
+                      value: notice
+                - uuid: 53566b87556d4aeba04968f51ada7174
+                  expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) > {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"}'
+                  name: '{#NAME} RuuviTag temperature is very high (above {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"})'
+                  priority: HIGH
+                  tags:
+                    - tag: scope
+                      value: notice
+                - uuid: ff86fc04e4324689accbde2f48e0605c
+                  expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) < {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"}'
+                  name: '{#NAME} RuuviTag temperature is very low (below {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"})'
+                  priority: HIGH
+                  tags:
+                    - tag: scope
+                      value: notice
+          parameters:
+            - name: ruuviTags
+              value: '{$RUUVITAGS}'
+      tags:
+        - tag: class
+          value: application
+        - tag: target
+          value: ruuvitag
+      macros:
+        - macro: '{$RUUVITAGS}'
+          value: '{"mac-address-1": "name-1", "mac-address-2": "name-2"}'
+          description: 'MAC addresses and names of the RuuviTags, in JSON'
+        - macro: '{$T_RUUVITAG_HUMIDITY_HIGH_THRESH1}'
+          value: '70'
+          description: 'Warning trigger'
+        - macro: '{$T_RUUVITAG_HUMIDITY_HIGH_THRESH2}'
+          value: '90'
+          description: 'High trigger'
+        - macro: '{$T_RUUVITAG_NODATA_INTERVAL}'
+          value: 1h
+        - macro: '{$T_RUUVITAG_SIGNAL_LOW_THRESH1}'
+          value: '-80'
+          description: 'Warning trigger'
+        - macro: '{$T_RUUVITAG_TEMP_HIGH_THRESH1}'
+          value: '23'
+          description: 'Warning trigger'
+        - macro: '{$T_RUUVITAG_TEMP_HIGH_THRESH2}'
+          value: '25'
+          description: 'High trigger'
+        - macro: '{$T_RUUVITAG_TEMP_LOW_THRESH1}'
+          value: '17'
+          description: 'Warning trigger'
+        - macro: '{$T_RUUVITAG_TEMP_LOW_THRESH2}'
+          value: '15'
+          description: 'High trigger'
