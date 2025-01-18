@@ -6,6 +6,7 @@
 - Raspberry Pi OS 12 (only tested with it)
 - Zabbix Agent or Zabbix Agent 2 installed (username "zabbix" is used for running the app,
 and `/run/zabbix` is used for saving the RuuviTag data)
+- Zabbix server 7.0 or newer (the template has only been tested with Zabbix 7.0)
 
 
 ## Install instructions on Raspberry Pi
