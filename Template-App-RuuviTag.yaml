@@ -115,6 +115,8 @@ zabbix_export:
                       value: availability
                 - uuid: a08c772277a743869d311746c35d8523
                   expression: 'max(/Template-App-RuuviTag/ruuvitag.rssi[{#MAC}],5m) < {$T_RUUVITAG_SIGNAL_LOW_THRESH1:"{#MAC}"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'min(/Template-App-RuuviTag/ruuvitag.rssi[{#MAC}],5m) >= {$T_RUUVITAG_SIGNAL_LOW_THRESH1:"{#MAC}"}'
                   name: '{#NAME} RuuviTag signal is low (under {$T_RUUVITAG_SIGNAL_LOW_THRESH1:"{#MAC}"} dBm)'
                   priority: WARNING
                   tags:
@@ -151,26 +153,34 @@ zabbix_export:
               trigger_prototypes:
                 - uuid: 67809dbadd0342b0b388e52774f34d1b
                   expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) > {$T_RUUVITAG_TEMP_HIGH_THRESH1:"{#MAC}"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) <= {$T_RUUVITAG_TEMP_HIGH_THRESH1:"{#MAC}"}'
                   name: '{#NAME} RuuviTag temperature is high (above {$T_RUUVITAG_TEMP_HIGH_THRESH1:"{#MAC}"})'
                   priority: WARNING
                   dependencies:
                     - name: '{#NAME} RuuviTag temperature is very high (above {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"})'
                       expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) > {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"}'
+                      recovery_expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) <= {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"}'
                   tags:
                     - tag: scope
                       value: notice
                 - uuid: 5de0d2b80864497eb9bcb86b87289f68
                   expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) < {$T_RUUVITAG_TEMP_LOW_THRESH1:"{#MAC}"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) >= {$T_RUUVITAG_TEMP_LOW_THRESH1:"{#MAC}"}'
                   name: '{#NAME} RuuviTag temperature is low (below {$T_RUUVITAG_TEMP_LOW_THRESH1:"{#MAC}"})'
                   priority: WARNING
                   dependencies:
                     - name: '{#NAME} RuuviTag temperature is very low (below {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"})'
                       expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) < {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"}'
+                      recovery_expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) >= {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"}'
                   tags:
                     - tag: scope
                       value: notice
                 - uuid: 53566b87556d4aeba04968f51ada7174
                   expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) > {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) <= {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"}'
                   name: '{#NAME} RuuviTag temperature is very high (above {$T_RUUVITAG_TEMP_HIGH_THRESH2:"{#MAC}"})'
                   priority: HIGH
                   tags:
@@ -178,6 +188,8 @@ zabbix_export:
                       value: notice
                 - uuid: ff86fc04e4324689accbde2f48e0605c
                   expression: 'max(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) < {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"}'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'min(/Template-App-RuuviTag/ruuvitag.temperature[{#MAC}],5m) >= {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"}'
                   name: '{#NAME} RuuviTag temperature is very low (below {$T_RUUVITAG_TEMP_LOW_THRESH2:"{#MAC}"})'
                   priority: HIGH
                   tags:
