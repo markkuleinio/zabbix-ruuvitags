@@ -11,7 +11,7 @@ and `/run/zabbix` is used for saving the RuuviTag data)
 
 ## Install instructions on Raspberry Pi
 
-Replace "markku:markku" with your current unprivileged username and group:
+Replace `markku:markku` with your current unprivileged username and group:
 
     sudo apt install bluez-hcidump
     sudo mkdir /opt/zabbix-ruuvitags
@@ -29,7 +29,7 @@ Replace "markku:markku" with your current unprivileged username and group:
 
 - Import the template in Zabbix and add it to your Raspberry Pi host
 - Modify the inherited `{$RUUVITAGS}` macro on the host to contain your RuuviTag MAC addresses
-and names (note that the macro value must be a valid JSON key-value object)
+and descriptive names (note that the macro value must be a valid JSON key-value object)
 - Modify the inherited default trigger threshold macros on the host, or add RuuviTag-specific
 context macros (like `{$T_RUUVITAG_TEMP_HIGH_THRESH1:"AA:BB:CC:DD:EE:FF"} = 50`) on the
 host to customize the triggers as needed
