@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import logging.handlers
 
@@ -7,12 +8,13 @@ from ruuvitag_sensor.ruuvi import RuuviTagSensor
 logger = logging.getLogger()
 
 
-def handle_data(data):
-    mac = data[0]
-    temperature = data[1]["temperature"]
-    humidity = data[1]["humidity"]
-    rssi = data[1]["rssi"]
-    logger.info(f"{mac} {temperature} {humidity} {rssi}")
+async def main():
+    async for found_data in RuuviTagSensor.get_data_async():
+        mac, data = found_data
+        temperature = data["temperature"]
+        humidity = data["humidity"]
+        rssi = data["rssi"]
+        logger.info(f"{mac} {temperature} {humidity} {rssi}")
 
 
 if __name__ == "__main__":
@@ -27,4 +29,4 @@ if __name__ == "__main__":
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-    RuuviTagSensor.get_data(handle_data)
+    asyncio.run(main())

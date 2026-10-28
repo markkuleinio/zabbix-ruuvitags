@@ -13,7 +13,6 @@ and `/run/zabbix` is used for saving the RuuviTag data)
 
 Replace `markku:markku` with your current unprivileged username and group:
 
-    sudo apt install bluez-hcidump
     sudo mkdir /opt/zabbix-ruuvitags
     sudo chown markku:markku /opt/zabbix-ruuvitags
     cd /opt/zabbix-ruuvitags
@@ -21,8 +20,6 @@ Replace `markku:markku` with your current unprivileged username and group:
     python3 -m venv venv
     venv/bin/pip install -U pip wheel
     venv/bin/pip install ruuvitag-sensor
-    echo "zabbix  ALL=(ALL)       NOPASSWD: /usr/bin/hciconfig,/usr/bin/hcitool,/usr/bin/hcidump" | sudo tee /etc/sudoers.d/ruuvitags
-    sudo chmod 0440 /etc/sudoers.d/ruuvitags
     sudo cp ruuvitags.service /etc/systemd/system
     sudo systemctl daemon-reload
     sudo systemctl enable ruuvitags.service --now
